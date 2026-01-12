@@ -16,10 +16,31 @@ db.init_app(app)
 
 @app.route('/messages')
 def messages():
-    return ''
+    if request.method == 'GET':
+        messages = Message.query.order_by(Message.created_at.asc()).all()
+        return jsonify([message.to_dict() for message in messages])
 
-@app.route('/messages/<int:id>')
-def messages_by_id(id):
+@app.route('/messages', methods=['POST'])
+def create_message():
+    data = request.get_json()
+    message = Message(body=data['body'], username=data['username'])
+    db.session.add(message)
+    db.session.commit()
+    return jsonify(message.to_dict())
+
+@app.route('/messages/<int:id>', methods=['PATCH'])
+def update_message(id):
+    message = Message.query.get(id)
+    data = request.get_json()
+    message.body = data['body']
+    db.session.commit()
+    return jsonify(message.to_dict())
+
+@app.route('/messages/<int:id>', methods=['DELETE'])
+def delete_message(id):
+    message = Message.query.get(id)
+    db.session.delete(message)
+    db.session.commit()
     return ''
 
 if __name__ == '__main__':
